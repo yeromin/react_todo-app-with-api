@@ -8,6 +8,7 @@ interface TodoListProps {
   loadingIds: number[];
   onDelete: (id: number) => void;
   onToggle: (id: number) => void;
+  onUpdate: (id: number, data: Partial<Todo>) => void;
 }
 
 export const TodoList: React.FC<TodoListProps> = ({
@@ -16,6 +17,7 @@ export const TodoList: React.FC<TodoListProps> = ({
   loadingIds,
   onDelete,
   onToggle,
+  onUpdate,
 }) => (
   <section className="todoapp__main" data-cy="TodoList">
     {todos.map(todo => (
@@ -25,6 +27,7 @@ export const TodoList: React.FC<TodoListProps> = ({
         isLoading={loadingIds.includes(todo.id)}
         onDelete={onDelete}
         onToggle={onToggle}
+        onUpdate={onUpdate}
       />
     ))}
     {tempTodo && <TodoItem todo={tempTodo} isLoading />}

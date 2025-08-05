@@ -3,7 +3,13 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Filter } from './types/Filter';
 import { UserWarning } from './UserWarning';
-import { USER_ID, getTodos, addTodo, deleteTodo } from './api/todos';
+import {
+  USER_ID,
+  getTodos,
+  addTodo,
+  deleteTodo,
+  updateTodo,
+} from './api/todos';
 import { Todo } from './types/Todo';
 import { TodoList } from './components/TodoList';
 import { TodoForm } from './components/TodoForm';
@@ -95,12 +101,73 @@ export const App: React.FC = () => {
     }
   };
 
-  const handleToggle = (id: number) => {
-    setTodos(prev =>
-      prev.map(todo =>
-        todo.id === id ? { ...todo, completed: !todo.completed } : todo,
-      ),
+  const handleToggle = async (id: number) => {
+    const todo = todos.find(t => t.id === id);
+
+    if (!todo) {
+      return;
+    }
+
+    setLoadingIds(ids => [...ids, id]);
+
+    try {
+      const updatedTodo = await updateTodo(id, { completed: !todo.completed });
+
+      setTodos(prev => prev.map(t => (t.id === id ? updatedTodo : t)));
+    } catch {
+      setError('Unable to update a todo');
+    } finally {
+      setLoadingIds(ids => ids.filter(i => i !== id));
+    }
+  };
+
+  const handleUpdate = async (id: number, data: Partial<Todo>) => {
+    setLoadingIds(ids => [...ids, id]);
+
+    try {
+      const updatedTodo = await updateTodo(id, data);
+
+      setTodos(prev => prev.map(t => (t.id === id ? updatedTodo : t)));
+    } catch {
+      setError('Unable to update a todo');
+    } finally {
+      setLoadingIds(ids => ids.filter(i => i !== id));
+    }
+  };
+
+  const handleToggleAll = async () => {
+    const allCompleted = todos.every(todo => todo.completed);
+    const todosToUpdate = todos.filter(
+      todo => todo.completed !== !allCompleted,
     );
+
+    if (todosToUpdate.length === 0) {
+      return;
+    }
+
+    const newCompletedStatus = !allCompleted;
+
+    // Add loading state for all todos being updated
+    setLoadingIds(ids => [...ids, ...todosToUpdate.map(t => t.id)]);
+
+    try {
+      await Promise.all(
+        todosToUpdate.map(todo =>
+          updateTodo(todo.id, { completed: newCompletedStatus }),
+        ),
+      );
+
+      // Update local state
+      setTodos(prev =>
+        prev.map(todo => ({ ...todo, completed: newCompletedStatus })),
+      );
+    } catch {
+      setError('Unable to update a todo');
+    } finally {
+      setLoadingIds(ids =>
+        ids.filter(id => !todosToUpdate.some(t => t.id === id)),
+      );
+    }
   };
 
   const completedTodos = todos.filter(todo => todo.completed);
@@ -156,6 +223,7 @@ export const App: React.FC = () => {
             }
             data-cy="ToggleAllButton"
             aria-label="Toggle all todos"
+            onClick={handleToggleAll}
           />
           <TodoForm
             inputValue={inputValue}
@@ -171,6 +239,7 @@ export const App: React.FC = () => {
           loadingIds={loadingIds}
           onDelete={handleDelete}
           onToggle={handleToggle}
+          onUpdate={handleUpdate}
         />
         {todos.length > 0 && (
           <footer className="todoapp__footer" data-cy="Footer">

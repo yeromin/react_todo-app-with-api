@@ -6,7 +6,7 @@ interface TodoItemProps {
   isLoading?: boolean;
   onDelete?: (id: number) => void;
   onToggle?: (id: number) => void;
-  onUpdate?: (id: number, data: Partial<Todo>) => void;
+  onUpdate?: (id: number, data: Partial<Todo>) => Promise<boolean>;
 }
 
 export const TodoItem: React.FC<TodoItemProps> = ({
@@ -34,7 +34,7 @@ export const TodoItem: React.FC<TodoItemProps> = ({
     }
   };
 
-  const handleEditSubmit = (e: React.FormEvent) => {
+  const handleEditSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const trimmedTitle = editTitle.trim();
 
@@ -53,13 +53,15 @@ export const TodoItem: React.FC<TodoItemProps> = ({
     }
 
     if (onUpdate) {
-      onUpdate(todo.id, { title: trimmedTitle });
-    }
+      const success = await onUpdate(todo.id, { title: trimmedTitle });
 
-    setIsEditing(false);
+      if (success) {
+        setIsEditing(false);
+      }
+    }
   };
 
-  const handleEditBlur = () => {
+  const handleEditBlur = async () => {
     const trimmedTitle = editTitle.trim();
 
     if (trimmedTitle === '') {
@@ -77,10 +79,12 @@ export const TodoItem: React.FC<TodoItemProps> = ({
     }
 
     if (onUpdate) {
-      onUpdate(todo.id, { title: trimmedTitle });
-    }
+      const success = await onUpdate(todo.id, { title: trimmedTitle });
 
-    setIsEditing(false);
+      if (success) {
+        setIsEditing(false);
+      }
+    }
   };
 
   const handleEditKeyUp = (e: React.KeyboardEvent) => {
@@ -136,20 +140,22 @@ export const TodoItem: React.FC<TodoItemProps> = ({
         </span>
       )}
 
-      <button
-        type="button"
-        className="todo__remove"
-        data-cy="TodoDelete"
-        aria-label="Delete todo"
-        onClick={() => {
-          if (onDelete) {
-            onDelete(todo.id);
-          }
-        }}
-        disabled={isLoading}
-      >
-        ×
-      </button>
+      {!isEditing && (
+        <button
+          type="button"
+          className="todo__remove"
+          data-cy="TodoDelete"
+          aria-label="Delete todo"
+          onClick={() => {
+            if (onDelete) {
+              onDelete(todo.id);
+            }
+          }}
+          disabled={isLoading}
+        >
+          ×
+        </button>
+      )}
 
       <div
         data-cy="TodoLoader"

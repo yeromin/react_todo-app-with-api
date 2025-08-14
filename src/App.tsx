@@ -128,8 +128,12 @@ export const App: React.FC = () => {
       const updatedTodo = await updateTodo(id, data);
 
       setTodos(prev => prev.map(t => (t.id === id ? updatedTodo : t)));
+
+      return true;
     } catch {
       setError('Unable to update a todo');
+
+      return false;
     } finally {
       setLoadingIds(ids => ids.filter(i => i !== id));
     }
@@ -213,18 +217,18 @@ export const App: React.FC = () => {
       <h1 className="todoapp__title">todos</h1>
       <div className="todoapp__content">
         <header className="todoapp__header">
-          <button
-            type="button"
-            className={
-              'todoapp__toggle-all' +
-              (todos.length > 0 && todos.every(t => t.completed)
-                ? ' active'
-                : '')
-            }
-            data-cy="ToggleAllButton"
-            aria-label="Toggle all todos"
-            onClick={handleToggleAll}
-          />
+          {todos.length > 0 && (
+            <button
+              type="button"
+              className={
+                'todoapp__toggle-all' +
+                (todos.every(t => t.completed) ? ' active' : '')
+              }
+              data-cy="ToggleAllButton"
+              aria-label="Toggle all todos"
+              onClick={handleToggleAll}
+            />
+          )}
           <TodoForm
             inputValue={inputValue}
             onInputChange={handleInputChange}

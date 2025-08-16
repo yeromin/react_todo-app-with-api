@@ -18,24 +18,20 @@ import { Notification } from './components/Notification';
 export const App: React.FC = () => {
   const [todos, setTodos] = useState<Todo[]>([]);
   const [tempTodo, setTempTodo] = useState<Todo | null>(null);
-  const [inputValue, setInputValue] = useState('');
-  const [loadingIds, setLoadingIds] = useState<number[]>([]); // for delete loaders
+  const [loadingIds, setLoadingIds] = useState<number[]>([]);
   const [error, setError] = useState('');
-  const [isAdding, setIsAdding] = useState(false);
   const [filter, setFilter] = useState<Filter>(Filter.ALL);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Load todos on mount
   useEffect(() => {
     getTodos()
       .then(setTodos)
       .catch(() => setError('Unable to load todos'));
   }, []);
 
-  // Focus input on mount and after add
   useEffect(() => {
     inputRef.current?.focus();
-  }, [isAdding, error]);
+  }, [tempTodo, error]);
 
   // Notification auto-hide
   useEffect(() => {
@@ -48,21 +44,13 @@ export const App: React.FC = () => {
     return undefined;
   }, [error]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setInputValue(e.target.value);
-  };
-
-  const handleAddTodo = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const title = inputValue.trim();
-
+  const handleAddTodo = async (title: string) => {
     if (!title) {
       setError('Title should not be empty');
 
-      return;
+      return false;
     }
 
-    setIsAdding(true);
     setTempTodo({
       id: 0,
       userId: USER_ID,
@@ -78,12 +66,14 @@ export const App: React.FC = () => {
       });
 
       setTodos(prev => [...prev, newTodo]);
-      setInputValue('');
+
+      return true;
     } catch {
       setError('Unable to add a todo');
+
+      return false;
     } finally {
       setTempTodo(null);
-      setIsAdding(false);
     }
   };
 
@@ -230,10 +220,8 @@ export const App: React.FC = () => {
             />
           )}
           <TodoForm
-            inputValue={inputValue}
-            onInputChange={handleInputChange}
             onSubmit={handleAddTodo}
-            isAdding={isAdding}
+            isAdding={!!tempTodo}
             inputRef={inputRef}
           />
         </header>

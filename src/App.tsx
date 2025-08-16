@@ -2,6 +2,7 @@
 /* eslint-disable jsx-a11y/control-has-associated-label */
 import React, { useEffect, useRef, useState } from 'react';
 import { Filter } from './types/Filter';
+import { ErrorMessage } from './types/ErrorMessage';
 import { UserWarning } from './UserWarning';
 import {
   USER_ID,
@@ -19,14 +20,14 @@ export const App: React.FC = () => {
   const [todos, setTodos] = useState<Todo[]>([]);
   const [tempTodo, setTempTodo] = useState<Todo | null>(null);
   const [loadingIds, setLoadingIds] = useState<number[]>([]);
-  const [error, setError] = useState('');
+  const [error, setError] = useState<ErrorMessage | ''>('');
   const [filter, setFilter] = useState<Filter>(Filter.ALL);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     getTodos()
       .then(setTodos)
-      .catch(() => setError('Unable to load todos'));
+      .catch(() => setError(ErrorMessage.LOAD));
   }, []);
 
   useEffect(() => {
@@ -46,7 +47,7 @@ export const App: React.FC = () => {
 
   const handleAddTodo = async (title: string) => {
     if (!title) {
-      setError('Title should not be empty');
+      setError(ErrorMessage.EMPTY_TITLE);
 
       return false;
     }
@@ -69,7 +70,7 @@ export const App: React.FC = () => {
 
       return true;
     } catch {
-      setError('Unable to add a todo');
+      setError(ErrorMessage.ADD);
 
       return false;
     } finally {
@@ -85,7 +86,7 @@ export const App: React.FC = () => {
       setTodos(prev => prev.filter(todo => todo.id !== id));
       inputRef.current?.focus();
     } catch {
-      setError('Unable to delete a todo');
+      setError(ErrorMessage.DELETE);
     } finally {
       setLoadingIds(ids => ids.filter(i => i !== id));
     }
@@ -105,7 +106,7 @@ export const App: React.FC = () => {
 
       setTodos(prev => prev.map(t => (t.id === id ? updatedTodo : t)));
     } catch {
-      setError('Unable to update a todo');
+      setError(ErrorMessage.UPDATE);
     } finally {
       setLoadingIds(ids => ids.filter(i => i !== id));
     }
@@ -121,7 +122,7 @@ export const App: React.FC = () => {
 
       return true;
     } catch {
-      setError('Unable to update a todo');
+      setError(ErrorMessage.UPDATE);
 
       return false;
     } finally {
@@ -156,7 +157,7 @@ export const App: React.FC = () => {
         prev.map(todo => ({ ...todo, completed: newCompletedStatus })),
       );
     } catch {
-      setError('Unable to update a todo');
+      setError(ErrorMessage.UPDATE);
     } finally {
       setLoadingIds(ids =>
         ids.filter(id => !todosToUpdate.some(t => t.id === id)),
@@ -189,7 +190,7 @@ export const App: React.FC = () => {
           await deleteTodo(todo.id);
           setTodos(prev => prev.filter(t => t.id !== todo.id));
         } catch {
-          setError('Unable to delete a todo');
+          setError(ErrorMessage.DELETE);
         } finally {
           setLoadingIds(ids => ids.filter(i => i !== todo.id));
         }

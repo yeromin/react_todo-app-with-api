@@ -34,7 +34,6 @@ export const App: React.FC = () => {
     inputRef.current?.focus();
   }, [tempTodo, error]);
 
-  // Notification auto-hide
   useEffect(() => {
     if (error) {
       const timer = setTimeout(() => setError(''), 3000);
@@ -142,7 +141,6 @@ export const App: React.FC = () => {
 
     const newCompletedStatus = !allCompleted;
 
-    // Add loading state for all todos being updated
     setLoadingIds(ids => [...ids, ...todosToUpdate.map(t => t.id)]);
 
     try {
@@ -152,7 +150,6 @@ export const App: React.FC = () => {
         ),
       );
 
-      // Update local state
       setTodos(prev =>
         prev.map(todo => ({ ...todo, completed: newCompletedStatus })),
       );
